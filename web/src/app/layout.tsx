@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ArteSana | Catálogo Natural",
   description: "Catálogo de productos artesanales ArteSana con control de pedidos e inventario.",
+  metadataBase: new URL(process.env.URL || "http://localhost:3000"),
   openGraph: {
     title: "ArteSana | Bienestar Natural",
     description: "Productos artesanales para el cuidado de la piel, el cabello y el equilibrio diario. Pedidos por WhatsApp.",

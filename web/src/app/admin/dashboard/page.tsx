@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import {
   Plus, Search, Edit2, Trash2, LogOut, X, Settings, Package,
-  AlertCircle, ShoppingBag, Loader2, Upload, Eye, EyeOff, Clock
+  AlertCircle, ShoppingBag, Loader2, Upload, Eye, EyeOff
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -32,6 +32,17 @@ interface Product {
   note: string;
   accent: string;
   is_active: boolean;
+  created_at: string;
+}
+
+interface InventoryEntry {
+  id: string;
+  product_id: string;
+  product_name: string;
+  previous_stock: number;
+  new_stock: number;
+  change_amount: number;
+  reason: string;
   created_at: string;
 }
 
@@ -92,11 +103,7 @@ export default function AdminDashboard() {
 
   // Estado para control de inventario
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
-  const [inventoryLog, setInventoryLog] = useState<any[]>([]);
-  const [inventoryFilter, setInventoryFilter] = useState('all');
-  const [manualProduct, setManualProduct] = useState('');
-  const [manualStock, setManualStock] = useState(0);
-  const [manualReason, setManualReason] = useState('');
+  const [inventoryLog, setInventoryLog] = useState<InventoryEntry[]>([]);
 
   // Estado para contenido editable del sitio
   const defaultContent = {
@@ -213,16 +220,6 @@ export default function AdminDashboard() {
     const changeAmount = newStock - prevStock;
     if (changeAmount === 0) return;
 
-    if (!reason && changeAmount > 0 && !confirm('Registrar como ingreso manual? Cancelar para especificar motivo.')) {
-      const customReason = prompt('Motivo del ajuste (+' + changeAmount + '):', 'Reposición de stock');
-      if (customReason === null) return;
-      reason = customReason;
-    } else if (!reason && changeAmount < 0 && !confirm('Registrar como venta? Cancelar para especificar motivo.')) {
-      const customReason = prompt('Motivo del ajuste (' + changeAmount + '):', 'Venta');
-      if (customReason === null) return;
-      reason = customReason;
-    }
-
     const finalReason = reason || (changeAmount > 0 ? 'Ingreso manual' : 'Venta / Ajuste');
 
     setProducts(prev => prev.map(p => p.id === id ? { ...p, stock: newStock } : p));
@@ -248,15 +245,6 @@ export default function AdminDashboard() {
       setError('No se pudo actualizar el stock en Supabase: ' + getErrorMessage(err));
       fetchProducts();
     }
-  };
-
-  const handleManualAdjustment = async (productId: string, newStock: number, reason: string) => {
-    if (!productId || !reason.trim()) {
-      setError('Selecciona un producto y escribe un motivo.');
-      return;
-    }
-    await handleStockChange(productId, newStock, reason.trim());
-    fetchInventoryLog();
   };
 
   // Cambiar estado activo rápidamente
@@ -518,6 +506,23 @@ export default function AdminDashboard() {
     const matchesCategory = categoryFilter === 'All' || product.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
+
+  const inventorySummary = products.map(product => {
+    const sold = inventoryLog
+      .filter(entry => entry.product_id === product.id && entry.change_amount < 0)
+      .reduce((total, entry) => total + Math.abs(entry.change_amount), 0);
+
+    return {
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      available: product.stock,
+      sold,
+    };
+  });
+
+  const totalAvailable = inventorySummary.reduce((total, item) => total + item.available, 0);
+  const totalSold = inventorySummary.reduce((total, item) => total + item.sold, 0);
 
   return (
     <div className="min-h-screen bg-[#fbf5ea] flex flex-col font-sans">
@@ -1031,100 +1036,44 @@ export default function AdminDashboard() {
             <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
                 <Package className="w-5 h-5 text-[#2d5a27]" />
-                <h2 className="text-xl font-serif font-bold text-[#732135]">Control de Inventario</h2>
+                <h2 className="text-xl font-serif font-bold text-[#732135]">Resumen de Inventario</h2>
               </div>
               <button onClick={() => setIsInventoryOpen(false)}
                 className="p-1.5 rounded-xl hover:bg-gray-100 text-[#2f2e2b] cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
 
-            {/* AJUSTE MANUAL */}
-            <div className="p-6 border-b border-gray-200 bg-[#fbf5ea]/50">
-              <h3 className="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-3">Ajuste Manual de Stock</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                <select value={manualProduct} onChange={(e) => {
-                  setManualProduct(e.target.value);
-                  const p = products.find(pr => pr.id === e.target.value);
-                  if (p) setManualStock(p.stock);
-                }}
-                  className="px-3 py-2 border border-gray-300 rounded-xl text-xs text-[#2f2e2b] focus:outline-none focus:ring-1 focus:ring-[#732135]">
-                  <option value="">Seleccionar producto...</option>
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} (stock: {p.stock})</option>
-                  ))}
-                </select>
-                <input type="number" min="0" placeholder="Nuevo stock" value={manualStock}
-                  onChange={(e) => setManualStock(parseInt(e.target.value) || 0)}
-                  className="px-3 py-2 border border-gray-300 rounded-xl text-xs text-[#2f2e2b] focus:outline-none focus:ring-1 focus:ring-[#732135]" />
-                <input type="text" placeholder="Motivo del ajuste" value={manualReason}
-                  onChange={(e) => setManualReason(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-xl text-xs text-[#2f2e2b] focus:outline-none focus:ring-1 focus:ring-[#732135]" />
-                <button onClick={async () => {
-                  if (!manualProduct) { setError('Selecciona un producto.'); return; }
-                  if (!manualReason.trim()) { setError('Escribe un motivo.'); return; }
-                  await handleManualAdjustment(manualProduct, manualStock, manualReason);
-                  setManualProduct('');
-                  setManualStock(0);
-                  setManualReason('');
-                }}
-                  className="px-4 py-2 bg-[#2d5a27] hover:bg-[#556b2f] text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer">
-                  Registrar Ajuste
-                </button>
+            <div className="grid grid-cols-2 gap-3 p-6 border-b border-gray-100 bg-[#fbf5ea]/50">
+              <div className="rounded-2xl bg-white border border-[#2d5a27]/10 p-4">
+                <p className="text-3xs font-extrabold uppercase tracking-wider text-gray-400">Disponible total</p>
+                <p className="mt-1 text-3xl font-black text-[#2d5a27]">{totalAvailable}</p>
+              </div>
+              <div className="rounded-2xl bg-white border border-[#732135]/10 p-4">
+                <p className="text-3xs font-extrabold uppercase tracking-wider text-gray-400">Vendido total</p>
+                <p className="mt-1 text-3xl font-black text-[#732135]">{totalSold}</p>
               </div>
             </div>
 
-            {/* FILTROS */}
-            <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-              <span className="text-2xs font-bold text-gray-400 uppercase tracking-wider">Filtrar:</span>
-              {['all', 'Ingreso manual', 'Venta / Ajuste', 'Reposición de stock', 'Venta'].map(f => (
-                <button key={f} onClick={() => setInventoryFilter(f)}
-                  className={`px-3 py-1 text-3xs font-extrabold uppercase tracking-wider rounded-full border transition-all cursor-pointer ${
-                    inventoryFilter === f ? 'bg-[#732135] text-white border-[#732135]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#732135]/40'
-                  }`}>
-                  {f === 'all' ? 'Todos' : f}
-                </button>
-              ))}
-            </div>
-
-            {/* HISTORIAL */}
             <div className="flex-1 overflow-y-auto p-6">
-              {inventoryLog.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
-                  <Package className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                  <p className="text-sm font-medium">Aún no hay movimientos de inventario.</p>
-                  <p className="text-xs mt-1">Usa los botones + y - en cada producto o el formulario de ajuste manual.</p>
+              <div className="overflow-hidden rounded-2xl border border-gray-100">
+                <div className="grid grid-cols-[1fr_90px_90px] bg-[#732135] text-white text-3xs font-extrabold uppercase tracking-wider">
+                  <div className="px-4 py-3">Producto</div>
+                  <div className="px-4 py-3 text-right">Disponible</div>
+                  <div className="px-4 py-3 text-right">Vendidos</div>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {inventoryLog
-                    .filter(e => inventoryFilter === 'all' || e.reason === inventoryFilter)
-                    .map(entry => (
-                      <div key={entry.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
-                        <div className="flex items-center gap-4 min-w-0">
-                          <Clock className="w-4 h-4 text-gray-400 shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold text-[#2f2e2b] truncate">{entry.product_name}</p>
-                            <p className="text-3xs text-gray-400">{new Date(entry.created_at).toLocaleString('es-BO')}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4 shrink-0">
-                          <span className="text-2xs text-gray-400 max-w-[120px] truncate" title={entry.reason}>{entry.reason}</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs text-gray-400">{entry.previous_stock}</span>
-                            <span className="text-xs text-gray-300">→</span>
-                            <span className={`text-sm font-extrabold ${entry.change_amount > 0 ? 'text-[#2d5a27]' : 'text-[#732135]'}`}>
-                              {entry.new_stock}
-                            </span>
-                          </div>
-                          <span className={`text-3xs font-extrabold px-2 py-0.5 rounded-full ${
-                            entry.change_amount > 0 ? 'bg-[#e2f0d9] text-[#2d5a27]' : 'bg-[#fbe3e4] text-[#732135]'
-                          }`}>
-                            {entry.change_amount > 0 ? `+${entry.change_amount}` : entry.change_amount}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
+                {inventorySummary.map(item => (
+                  <div key={item.id} className="grid grid-cols-[1fr_90px_90px] items-center border-t border-gray-100 bg-white text-sm">
+                    <div className="px-4 py-3 min-w-0">
+                      <p className="font-bold text-[#2f2e2b] truncate">{item.name}</p>
+                      <p className="text-3xs text-gray-400 truncate">{item.category}</p>
+                    </div>
+                    <div className="px-4 py-3 text-right font-black text-[#2d5a27]">{item.available}</div>
+                    <div className="px-4 py-3 text-right font-black text-[#732135]">{item.sold}</div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-xs text-gray-400">
+                Vendidos se calcula con las salidas de stock registradas desde los botones - de cada producto.
+              </p>
             </div>
           </div>
         </div>
