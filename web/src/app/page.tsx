@@ -504,6 +504,16 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 mt-12 pt-6 border-t border-gray-200/50 text-center text-3xs text-gray-400">© 2026 ArteSana. Santa Cruz, Bolivia.</div>
       </footer>
 
+      {totalItems > 0 && !isCartOpen && (
+        <button onClick={() => setIsCartOpen(true)}
+          className="fixed left-4 right-4 bottom-4 z-40 mx-auto max-w-md bg-[#732135] text-white rounded-2xl shadow-2xl border border-white/20 px-4 py-3.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-[#b76545] transition-all md:hidden">
+          <span className="flex items-center gap-2 font-bold text-sm">
+            <ShoppingCart className="w-5 h-5" /> Ver carrito ({totalItems})
+          </span>
+          <span className="font-black text-lg">Bs {totalPrice}</span>
+        </button>
+      )}
+
       {/* MODAL DETALLADO */}
       {selectedProduct && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
@@ -625,8 +635,8 @@ export default function Home() {
         <div className="fixed inset-0 z-50 overflow-hidden font-sans">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity" onClick={() => setIsCartOpen(false)} />
           <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-            <div className="w-screen max-w-md bg-white flex flex-col shadow-2xl border-l border-[#732135]/10 relative">
-              <div className="px-5 py-5 bg-[#fbf5ea] border-b border-[#732135]/15 flex items-center justify-between sticky top-0">
+            <div className="w-screen max-w-md h-dvh bg-white flex flex-col shadow-2xl border-l border-[#732135]/10 relative">
+              <div className="px-5 py-5 bg-[#fbf5ea] border-b border-[#732135]/15 flex items-center justify-between shrink-0 z-10">
                 <div className="flex items-center gap-2"><ShoppingCart className="w-5 h-5 text-[#732135]" /><h2 className="text-lg font-serif font-bold text-[#732135]">Mi Carrito ({totalItems})</h2></div>
                 <button onClick={() => setIsCartOpen(false)} className="p-1.5 hover:bg-gray-200/50 rounded-xl text-[#2f2e2b] cursor-pointer"><X className="w-5 h-5" /></button>
               </div>
@@ -676,7 +686,7 @@ export default function Home() {
               </div>
 
               {cart.length > 0 && (
-                <div className="p-5 border-t border-gray-100 bg-gray-50 space-y-4">
+                <div className="p-5 border-t border-gray-100 bg-gray-50 space-y-4 shrink-0 shadow-[0_-12px_30px_rgba(0,0,0,0.08)]">
                   <div className="flex items-center justify-between"><span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Total</span><span className="text-2xl font-black text-[#732135]">Bs {totalPrice}</span></div>
                   <div className="bg-[#e2f0d9] border border-[#2d5a27]/10 rounded-xl p-3 flex gap-2"><Check className="w-4 h-4 text-[#2d5a27] shrink-0 mt-0.5" /><p className="text-3xs text-[#2f2e2b]/80">¡Tu pedido califica para <strong>DELIVERY GRATUITO</strong> hasta el 4to anillo!</p></div>
                   <button onClick={handleCheckout}
