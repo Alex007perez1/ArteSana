@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import {
-  Plus, Search, Edit2, Trash2, LogOut, X, Settings,
-  AlertCircle, ShoppingBag, Loader2, Upload, Eye, EyeOff
+  Plus, Search, Edit2, Trash2, LogOut, X, Settings, Package,
+  AlertCircle, ShoppingBag, Loader2, Upload, Eye, EyeOff, Clock
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -90,6 +90,11 @@ export default function AdminDashboard() {
   const [qrUploading, setQrUploading] = useState<'none' | 'whatsapp' | 'pago'>('none');
   const [savingSettings, setSavingSettings] = useState(false);
 
+  // Estado para control de inventario
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [inventoryLog, setInventoryLog] = useState<any[]>([]);
+  const [inventoryFilter, setInventoryFilter] = useState('all');
+
   // Estado para contenido editable del sitio
   const defaultContent = {
     hero_badge: 'Catálogo de Bienestar 2026',
@@ -166,6 +171,21 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const fetchInventoryLog = useCallback(async (productId?: string) => {
+    try {
+      let query = supabase
+        .from('inventory_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (productId) query = query.eq('product_id', productId);
+      const { data } = await query;
+      setInventoryLog(data || []);
+    } catch {
+      // tabla podría no existir aún
+    }
+  }, []);
+
   // Verificar sesión y cargar datos
   useEffect(() => {
     const checkUserAndLoad = async () => {
@@ -185,7 +205,11 @@ export default function AdminDashboard() {
   // Ajuste rápido de Stock
   const handleStockChange = async (id: string, newStock: number) => {
     if (newStock < 0) return;
-    
+
+    const prevStock = products.find(p => p.id === id)?.stock ?? 0;
+    const changeAmount = newStock - prevStock;
+    if (changeAmount === 0) return;
+
     setProducts(prev => prev.map(p => p.id === id ? { ...p, stock: newStock } : p));
 
     try {
@@ -195,6 +219,16 @@ export default function AdminDashboard() {
         .eq('id', id);
 
       if (updateError) throw updateError;
+
+      const product = products.find(p => p.id === id);
+      await supabase.from('inventory_log').insert({
+        product_id: id,
+        product_name: product?.name || 'Desconocido',
+        previous_stock: prevStock,
+        new_stock: newStock,
+        change_amount: changeAmount,
+        reason: changeAmount > 0 ? 'Ingreso manual' : 'Venta / Ajuste',
+      });
     } catch (err: unknown) {
       setError('No se pudo actualizar el stock en Supabase: ' + getErrorMessage(err));
       fetchProducts();
@@ -473,6 +507,16 @@ export default function AdminDashboard() {
             </span>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => {
+                fetchInventoryLog();
+                setIsInventoryOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-[#2d5a27] hover:text-[#556b2f] transition-colors cursor-pointer"
+            >
+              <Package className="w-4 h-4" />
+              <span className="hidden sm:inline">Inventario</span>
+            </button>
             <button
               onClick={() => {
                 loadSettings();
@@ -951,6 +995,73 @@ export default function AdminDashboard() {
                 className="px-6 py-2.5 bg-[#732135] hover:bg-[#b76545] text-white font-bold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50">
                 {savingSettings ? 'Guardando...' : 'Guardar Cambios'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE INVENTARIO */}
+      {isInventoryOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-[#732135]/10 overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+              <div className="flex items-center gap-3">
+                <Package className="w-5 h-5 text-[#2d5a27]" />
+                <h2 className="text-xl font-serif font-bold text-[#732135]">Control de Inventario</h2>
+              </div>
+              <button onClick={() => setIsInventoryOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-gray-100 text-[#2f2e2b] cursor-pointer"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+              <span className="text-2xs font-bold text-gray-400 uppercase tracking-wider">Filtrar:</span>
+              {['all', 'Ingreso manual', 'Venta / Ajuste'].map(f => (
+                <button key={f} onClick={() => setInventoryFilter(f)}
+                  className={`px-3 py-1 text-3xs font-extrabold uppercase tracking-wider rounded-full border transition-all cursor-pointer ${
+                    inventoryFilter === f ? 'bg-[#732135] text-white border-[#732135]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#732135]/40'
+                  }`}>
+                  {f === 'all' ? 'Todos' : f}
+                </button>
+              ))}
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              {inventoryLog.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <Package className="w-10 h-10 mx-auto mb-3 opacity-40" />
+                  <p className="text-sm font-medium">Aún no hay movimientos de inventario.</p>
+                  <p className="text-xs mt-1">Usa los botones + y - en cada producto para registrar cambios.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {inventoryLog
+                    .filter(e => inventoryFilter === 'all' || e.reason === inventoryFilter)
+                    .map(entry => (
+                      <div key={entry.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+                        <div className="flex items-center gap-4 min-w-0">
+                          <Clock className="w-4 h-4 text-gray-400 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-[#2f2e2b] truncate">{entry.product_name}</p>
+                            <p className="text-3xs text-gray-400">{new Date(entry.created_at).toLocaleString('es-BO')}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 shrink-0">
+                          <span className="text-2xs text-gray-400">{entry.reason}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-gray-400">{entry.previous_stock}</span>
+                            <span className="text-xs text-gray-300">→</span>
+                            <span className={`text-sm font-extrabold ${entry.change_amount > 0 ? 'text-[#2d5a27]' : 'text-[#732135]'}`}>
+                              {entry.new_stock}
+                            </span>
+                          </div>
+                          <span className={`text-3xs font-extrabold px-2 py-0.5 rounded-full ${
+                            entry.change_amount > 0 ? 'bg-[#e2f0d9] text-[#2d5a27]' : 'bg-[#fbe3e4] text-[#732135]'
+                          }`}>
+                            {entry.change_amount > 0 ? `+${entry.change_amount}` : entry.change_amount}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
