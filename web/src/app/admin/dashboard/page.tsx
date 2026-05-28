@@ -94,6 +94,9 @@ export default function AdminDashboard() {
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [inventoryLog, setInventoryLog] = useState<any[]>([]);
   const [inventoryFilter, setInventoryFilter] = useState('all');
+  const [manualProduct, setManualProduct] = useState('');
+  const [manualStock, setManualStock] = useState(0);
+  const [manualReason, setManualReason] = useState('');
 
   // Estado para contenido editable del sitio
   const defaultContent = {
@@ -203,12 +206,24 @@ export default function AdminDashboard() {
   }, [fetchProducts, loadSettings, router]);
 
   // Ajuste rápido de Stock
-  const handleStockChange = async (id: string, newStock: number) => {
+  const handleStockChange = async (id: string, newStock: number, reason?: string) => {
     if (newStock < 0) return;
 
     const prevStock = products.find(p => p.id === id)?.stock ?? 0;
     const changeAmount = newStock - prevStock;
     if (changeAmount === 0) return;
+
+    if (!reason && changeAmount > 0 && !confirm('Registrar como ingreso manual? Cancelar para especificar motivo.')) {
+      const customReason = prompt('Motivo del ajuste (+' + changeAmount + '):', 'Reposición de stock');
+      if (customReason === null) return;
+      reason = customReason;
+    } else if (!reason && changeAmount < 0 && !confirm('Registrar como venta? Cancelar para especificar motivo.')) {
+      const customReason = prompt('Motivo del ajuste (' + changeAmount + '):', 'Venta');
+      if (customReason === null) return;
+      reason = customReason;
+    }
+
+    const finalReason = reason || (changeAmount > 0 ? 'Ingreso manual' : 'Venta / Ajuste');
 
     setProducts(prev => prev.map(p => p.id === id ? { ...p, stock: newStock } : p));
 
@@ -227,12 +242,21 @@ export default function AdminDashboard() {
         previous_stock: prevStock,
         new_stock: newStock,
         change_amount: changeAmount,
-        reason: changeAmount > 0 ? 'Ingreso manual' : 'Venta / Ajuste',
+        reason: finalReason,
       });
     } catch (err: unknown) {
       setError('No se pudo actualizar el stock en Supabase: ' + getErrorMessage(err));
       fetchProducts();
     }
+  };
+
+  const handleManualAdjustment = async (productId: string, newStock: number, reason: string) => {
+    if (!productId || !reason.trim()) {
+      setError('Selecciona un producto y escribe un motivo.');
+      return;
+    }
+    await handleStockChange(productId, newStock, reason.trim());
+    fetchInventoryLog();
   };
 
   // Cambiar estado activo rápidamente
@@ -1012,9 +1036,46 @@ export default function AdminDashboard() {
               <button onClick={() => setIsInventoryOpen(false)}
                 className="p-1.5 rounded-xl hover:bg-gray-100 text-[#2f2e2b] cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
+
+            {/* AJUSTE MANUAL */}
+            <div className="p-6 border-b border-gray-200 bg-[#fbf5ea]/50">
+              <h3 className="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-3">Ajuste Manual de Stock</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <select value={manualProduct} onChange={(e) => {
+                  setManualProduct(e.target.value);
+                  const p = products.find(pr => pr.id === e.target.value);
+                  if (p) setManualStock(p.stock);
+                }}
+                  className="px-3 py-2 border border-gray-300 rounded-xl text-xs text-[#2f2e2b] focus:outline-none focus:ring-1 focus:ring-[#732135]">
+                  <option value="">Seleccionar producto...</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} (stock: {p.stock})</option>
+                  ))}
+                </select>
+                <input type="number" min="0" placeholder="Nuevo stock" value={manualStock}
+                  onChange={(e) => setManualStock(parseInt(e.target.value) || 0)}
+                  className="px-3 py-2 border border-gray-300 rounded-xl text-xs text-[#2f2e2b] focus:outline-none focus:ring-1 focus:ring-[#732135]" />
+                <input type="text" placeholder="Motivo del ajuste" value={manualReason}
+                  onChange={(e) => setManualReason(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-xl text-xs text-[#2f2e2b] focus:outline-none focus:ring-1 focus:ring-[#732135]" />
+                <button onClick={async () => {
+                  if (!manualProduct) { setError('Selecciona un producto.'); return; }
+                  if (!manualReason.trim()) { setError('Escribe un motivo.'); return; }
+                  await handleManualAdjustment(manualProduct, manualStock, manualReason);
+                  setManualProduct('');
+                  setManualStock(0);
+                  setManualReason('');
+                }}
+                  className="px-4 py-2 bg-[#2d5a27] hover:bg-[#556b2f] text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer">
+                  Registrar Ajuste
+                </button>
+              </div>
+            </div>
+
+            {/* FILTROS */}
             <div className="p-6 border-b border-gray-100 flex items-center gap-3">
               <span className="text-2xs font-bold text-gray-400 uppercase tracking-wider">Filtrar:</span>
-              {['all', 'Ingreso manual', 'Venta / Ajuste'].map(f => (
+              {['all', 'Ingreso manual', 'Venta / Ajuste', 'Reposición de stock', 'Venta'].map(f => (
                 <button key={f} onClick={() => setInventoryFilter(f)}
                   className={`px-3 py-1 text-3xs font-extrabold uppercase tracking-wider rounded-full border transition-all cursor-pointer ${
                     inventoryFilter === f ? 'bg-[#732135] text-white border-[#732135]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#732135]/40'
@@ -1023,12 +1084,14 @@ export default function AdminDashboard() {
                 </button>
               ))}
             </div>
+
+            {/* HISTORIAL */}
             <div className="flex-1 overflow-y-auto p-6">
               {inventoryLog.length === 0 ? (
                 <div className="text-center py-12 text-gray-400">
                   <Package className="w-10 h-10 mx-auto mb-3 opacity-40" />
                   <p className="text-sm font-medium">Aún no hay movimientos de inventario.</p>
-                  <p className="text-xs mt-1">Usa los botones + y - en cada producto para registrar cambios.</p>
+                  <p className="text-xs mt-1">Usa los botones + y - en cada producto o el formulario de ajuste manual.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -1044,7 +1107,7 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                         <div className="flex items-center gap-4 shrink-0">
-                          <span className="text-2xs text-gray-400">{entry.reason}</span>
+                          <span className="text-2xs text-gray-400 max-w-[120px] truncate" title={entry.reason}>{entry.reason}</span>
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs text-gray-400">{entry.previous_stock}</span>
                             <span className="text-xs text-gray-300">→</span>
