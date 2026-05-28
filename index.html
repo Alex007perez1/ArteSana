@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArteSana | Catalogo Revista</title>
+  <style>
+    :root {
+      --hueso: #fbf5ea;
+      --verde: #556b2f;
+      --verde-profundo: #2d5a27;
+      --guindo: #732135;
+      --rosa: #fbe3e4;
+      --terracota: #b76545;
+      --gris: #2f2e2b;
+      --linea: rgba(115, 33, 53, 0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #d8d2c7;
+      color: var(--gris);
+      font-family: "Montserrat", "Aptos", "Segoe UI", Arial, sans-serif;
+    }
+
+    .deck {
+      display: grid;
+      gap: 28px;
+      padding: 28px;
+      justify-content: center;
+    }
+
+    .slide {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      overflow: hidden;
+      background: var(--hueso);
+      box-shadow: 0 18px 44px rgba(47, 46, 43, 0.22);
+      isolation: isolate;
+    }
+
+    .slide::after {
+      content: "";
+      position: absolute;
+      inset: 26px;
+      border: 1px solid rgba(85, 107, 47, 0.18);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .watermark {
+      position: absolute;
+      right: 46px;
+      bottom: 34px;
+      width: 150px;
+      opacity: 0.08;
+      z-index: 0;
+    }
+
+    .eyebrow {
+      color: var(--terracota);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-family: Georgia, "Times New Roman", serif;
+      margin: 0;
+      color: var(--guindo);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+    }
+
+    h1 {
+      font-size: 86px;
+      line-height: 0.95;
+    }
+
+    h2 {
+      font-size: 66px;
+      line-height: 0.96;
+    }
+
+    h3 {
+      font-size: 28px;
+      line-height: 1.1;
+    }
+
+    p {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.45;
+    }
+
+    .small {
+      font-size: 16px;
+      line-height: 1.45;
+    }
+
+    .micro {
+      font-size: 13px;
+      line-height: 1.35;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-weight: 800;
+    }
+
+    .cover {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      background:
+        radial-gradient(circle at 80% 14%, rgba(183, 101, 69, 0.18), transparent 32%),
+        linear-gradient(135deg, var(--rosa) 0%, #fff8ef 55%, #efe2d3 100%);
+    }
+
+    .cover-copy {
+      padding: 72px 48px 64px 82px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 2;
+    }
+
+    .cover-logo {
+      width: 430px;
+      border-radius: 28px;
+      box-shadow: 0 28px 72px rgba(115, 33, 53, 0.14);
+    }
+
+    .cover-hero {
+      position: relative;
+      display: grid;
+      place-items: center;
+      background: var(--verde);
+      clip-path: ellipse(78% 92% at 68% 50%);
+    }
+
+    .cover-hero img {
+      max-width: 88%;
+      max-height: 82%;
+      object-fit: contain;
+      filter: drop-shadow(0 26px 30px rgba(47, 46, 43, 0.22));
+    }
+
+    .cover-band {
+      width: fit-content;
+      padding: 13px 18px;
+      color: var(--hueso);
+      background: var(--guindo);
+      border-radius: 999px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .product {
+      display: grid;
+      grid-template-columns: 48% 52%;
+      min-height: 100%;
+    }
+
+    .product.reverse {
+      grid-template-columns: 52% 48%;
+    }
+
+    .visual {
+      position: relative;
+      display: grid;
+      place-items: center;
+      padding: 42px;
+      background:
+        radial-gradient(circle at 48% 56%, rgba(255, 255, 255, 0.84) 0 28%, transparent 29%),
+        linear-gradient(145deg, rgba(251, 227, 228, 0.82), rgba(251, 245, 234, 0.54));
+    }
+
+    .visual.green {
+      background:
+        radial-gradient(circle at 52% 50%, rgba(251, 245, 234, 0.92) 0 29%, transparent 30%),
+        linear-gradient(145deg, rgba(85, 107, 47, 0.92), rgba(45, 90, 39, 0.72));
+    }
+
+    .visual.terracotta {
+      background:
+        radial-gradient(circle at 54% 52%, rgba(251, 245, 234, 0.92) 0 30%, transparent 31%),
+        linear-gradient(145deg, rgba(183, 101, 69, 0.88), rgba(115, 33, 53, 0.62));
+    }
+
+    .visual img.product-img {
+      max-width: 92%;
+      max-height: 600px;
+      object-fit: contain;
+      mix-blend-mode: multiply;
+      filter: drop-shadow(0 25px 26px rgba(47, 46, 43, 0.2));
+      z-index: 2;
+    }
+
+    .visual.green img.product-img,
+    .visual.terracotta img.product-img,
+    .bleed img.product-img {
+      mix-blend-mode: normal;
+    }
+
+    .content {
+      position: relative;
+      z-index: 2;
+      padding: 58px 72px 54px 58px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 22px;
+    }
+
+    .reverse .content {
+      padding: 58px 58px 54px 76px;
+    }
+
+    .price-row {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: var(--rosa);
+      color: var(--guindo);
+      font-weight: 800;
+      font-size: 17px;
+    }
+
+    .price {
+      background: var(--guindo);
+      color: #fff;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .card {
+      min-height: 116px;
+      padding: 17px 18px;
+      background: rgba(255, 255, 255, 0.58);
+      border: 1px solid var(--linea);
+      border-radius: 22px;
+      box-shadow: 0 12px 28px rgba(47, 46, 43, 0.06);
+    }
+
+    .card strong {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--verde-profundo);
+      font-size: 15px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .card span {
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .note {
+      padding: 14px 17px;
+      border-left: 5px solid var(--terracota);
+      background: rgba(251, 227, 228, 0.46);
+      border-radius: 0 18px 18px 0;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .bleed {
+      display: grid;
+      grid-template-columns: 58% 42%;
+      background: var(--verde-profundo);
+      color: var(--hueso);
+    }
+
+    .bleed .photo {
+      position: relative;
+      display: grid;
+      place-items: center;
+      padding: 34px;
+      background:
+        linear-gradient(rgba(251, 245, 234, 0.18), rgba(251, 245, 234, 0.18)),
+        var(--hueso);
+    }
+
+    .bleed img.product-img {
+      max-width: 92%;
+      max-height: 610px;
+      object-fit: contain;
+      filter: drop-shadow(0 28px 32px rgba(47, 46, 43, 0.26));
+    }
+
+    .bleed .content {
+      padding: 62px 60px;
+      color: var(--hueso);
+    }
+
+    .bleed h2,
+    .bleed .eyebrow {
+      color: var(--hueso);
+    }
+
+    .bleed .card {
+      background: rgba(251, 245, 234, 0.12);
+      border-color: rgba(251, 245, 234, 0.22);
+    }
+
+    .bleed .card strong {
+      color: var(--rosa);
+    }
+
+    .bleed .note {
+      background: rgba(251, 245, 234, 0.12);
+      border-left-color: var(--rosa);
+    }
+
+    .contact {
+      display: grid;
+      grid-template-columns: 42% 58%;
+      background:
+        radial-gradient(circle at 18% 24%, rgba(251, 227, 228, 0.9), transparent 36%),
+        linear-gradient(135deg, var(--hueso), #f5ded2);
+    }
+
+    .contact-left {
+      padding: 62px 50px 58px 76px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 2;
+    }
+
+    .contact-left img {
+      width: 305px;
+      border-radius: 24px;
+    }
+
+    .contact-right {
+      position: relative;
+      padding: 58px 76px 58px 34px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      align-content: center;
+      z-index: 2;
+    }
+
+    .qr-card {
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid var(--linea);
+      border-radius: 28px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 18px 38px rgba(115, 33, 53, 0.08);
+    }
+
+    .qr-card img {
+      width: 245px;
+      height: 245px;
+      object-fit: cover;
+      border-radius: 14px;
+      background: white;
+    }
+
+    .wide-card {
+      grid-column: 1 / -1;
+      padding: 24px 28px;
+      border-radius: 28px;
+      background: var(--guindo);
+      color: white;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .wide-card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 30px;
+      font-weight: 500;
+    }
+
+    .wide-card .pill {
+      background: var(--rosa);
+      color: var(--guindo);
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .deck {
+        padding: 0;
+        gap: 0;
+      }
+
+      .slide {
+        box-shadow: none;
+        break-after: page;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck">
+    <section class="slide cover">
+      <div class="cover-copy">
+        <div>
+          <img class="cover-logo" src="1_20260517_195608_0000.png" alt="Logo ArteSana" />
+        </div>
+        <div>
+          <div class="eyebrow">Catalogo revista 2026</div>
+          <h1>Bienestar natural para cada dia</h1>
+          <p>Productos artesanales seleccionados para acompanar el cuidado de la piel, el cabello y el equilibrio diario.</p>
+        </div>
+        <div class="cover-band">Creando bienestar integral</div>
+      </div>
+      <div class="cover-hero">
+        <img src="image.jpg" alt="Kefir de leche ArteSana" />
+      </div>
+    </section>
+
+    <section class="slide product">
+      <img class="watermark" src="1_20260517_195608_0000.png" alt="" />
+      <div class="visual green"><img class="product-img" src="1779057926520.jpg" alt="Jabon de Carbon" /></div>
+      <div class="content">
+        <div class="eyebrow">Jabones artesanales</div>
+        <h2>Jabon de Carbon</h2>
+        <p>Limpieza profunda para piel con exceso de grasa, brillo e impurezas visibles.</p>
+        <div class="price-row"><span class="pill">90 g</span><span class="pill price">Bs ___</span></div>
+        <div class="cards">
+          <div class="card"><strong>Beneficio</strong><span>El carbon activado ayuda a adsorber sebo, particulas e impurezas superficiales.</span></div>
+          <div class="card"><strong>Uso</strong><span>Humedecer rostro o cuerpo, espumar 30 a 45 segundos y retirar con agua.</span></div>
+          <div class="card"><strong>Aplicacion</strong><span>Usar 1 vez al dia en piel grasa. Alternar si la piel se siente reseca.</span></div>
+          <div class="card"><strong>Recomendacion</strong><span>Aplicar hidratante despues de la limpieza para conservar la barrera cutanea.</span></div>
+        </div>
+        <div class="note">Uso seguro siguiendo recomendaciones de aplicacion.</div>
+      </div>
+    </section>
+
+    <section class="slide product reverse">
+      <img class="watermark" src="1_20260517_195608_0000.png" alt="" />
+      <div class="content">
+        <div class="eyebrow">Piel sensible</div>
+        <h2>Jabon de Manzanilla</h2>
+        <p>Suavidad herbal para limpiar, nutrir y dar confort a pieles delicadas.</p>
+        <div class="price-row"><span class="pill">90 g</span><span class="pill price">Bs ___</span></div>
+        <div class="cards">
+          <div class="card"><strong>Beneficio</strong><span>La manzanilla aporta compuestos calmantes asociados al confort de la piel sensible.</span></div>
+          <div class="card"><strong>Uso</strong><span>Masajear con movimientos circulares suaves, sin friccion intensa.</span></div>
+          <div class="card"><strong>Aplicacion</strong><span>Ideal para uso diario en rostro, cuello o zonas con sensacion de tirantez.</span></div>
+          <div class="card"><strong>Recomendacion</strong><span>Secar con toalla limpia a toques y complementar con crema ligera.</span></div>
+        </div>
+        <div class="note">Formula artesanal pensada para una limpieza amable y sensorial.</div>
+      </div>
+      <div class="visual"><img class="product-img" src="1779058143113.jpg" alt="Jabon de Manzanilla" /></div>
+    </section>
+
+    <section class="slide product">
+      <img class="watermark" src="1_20260517_195608_0000.png" alt="" />
+      <div class="visual terracotta"><img class="product-img" src="1779058219869.jpg" alt="Jabon de Romero" /></div>
+      <div class="content">
+        <div class="eyebrow">Herbal revitalizante</div>
+        <h2>Jabon de Romero</h2>
+        <p>Limpieza estimulante con aroma herbal para una piel con sensacion fresca y tonificada.</p>
+        <div class="price-row"><span class="pill">90 g</span><span class="pill price">Bs ___</span></div>
+        <div class="cards">
+          <div class="card"><strong>Beneficio</strong><span>El romero contiene antioxidantes naturales usados tradicionalmente en cuidado cutaneo.</span></div>
+          <div class="card"><strong>Uso</strong><span>Crear espuma en manos y aplicar sobre piel humeda durante 30 segundos.</span></div>
+          <div class="card"><strong>Aplicacion</strong><span>Recomendado para ducha matinal o despues de actividad fisica ligera.</span></div>
+          <div class="card"><strong>Recomendacion</strong><span>Guardar en jabonera drenante para conservar su textura por mas tiempo.</span></div>
+        </div>
+        <div class="note">Cuidado artesanal con sensacion herbal, limpia y vigorizante.</div>
+      </div>
+    </section>
+
+    <section class="slide product reverse">
+      <img class="watermark" src="1_20260517_195608_0000.png" alt="" />
+      <div class="content">
+        <div class="eyebrow">Humectacion diaria</div>
+        <h2>Jabon de Aloe Vera</h2>
+        <p>Una barra suave para acompanar la hidratacion y el cuidado cotidiano de la piel.</p>
+        <div class="price-row"><span class="pill">90 g</span><span class="pill price">Bs ___</span></div>
+        <div class="cards">
+          <div class="card"><strong>Beneficio</strong><span>El aloe vera es valorado por su contenido de mucilagos con efecto humectante.</span></div>
+          <div class="card"><strong>Uso</strong><span>Aplicar sobre piel humeda, espumar suavemente y enjuagar con agua fresca.</span></div>
+          <div class="card"><strong>Aplicacion</strong><span>Puede usarse en rostro y cuerpo como limpieza diaria de baja agresividad.</span></div>
+          <div class="card"><strong>Recomendacion</strong><span>Combinar con crema facial cuando se busque mayor suavidad al tacto.</span></div>
+        </div>
+        <div class="note">Uso seguro siguiendo recomendaciones de aplicacion.</div>
+      </div>
+      <div class="visual green"><img class="product-img" src="1779059711115.jpg" alt="Jabon de Aloe Vera" /></div>
+    </section>
+
+    <section class="slide product">
+      <img class="watermark" src="1_20260517_195608_0000.png" alt="" />
+      <div class="visual"><img class="product-img" src="1779059812483.jpg" alt="Jabon de Arroz" /></div>
+      <div class="content">
+        <div class="eyebrow">Luminosidad natural</div>
+        <h2>Jabon de Arroz</h2>
+        <p>Para una piel mas suave, uniforme y luminosa dentro de una rutina constante.</p>
+        <div class="price-row"><span class="pill">90 g</span><span class="pill price">Bs ___</span></div>
+        <div class="cards">
+          <div class="card"><strong>Beneficio</strong><span>El arroz aporta almidones y compuestos suavizantes usados en cosmetica natural.</span></div>
+          <div class="card"><strong>Uso</strong><span>Masajear la espuma en rostro o cuerpo, evitando el contorno de ojos.</span></div>
+          <div class="card"><strong>Aplicacion</strong><span>Usar en la noche y complementar de dia con hidratacion y proteccion solar.</span></div>
+          <div class="card"><strong>Recomendacion</strong><span>Combo sugerido: Jabon de Arroz + Crema Facial + Shampoo Anti-Stress.</span></div>
+        </div>
+        <div class="note">Ideal para rutinas que buscan suavidad, tono visual mas parejo y cuidado constante.</div>
+      </div>
+    </section>
+
+    <section class="slide product reverse">
+      <img class="watermark" src="1_20260517_195608_0000.png" alt="" />
+      <div class="content">
+        <div class="eyebrow">Control de brillo</div>
+        <h2>Jabon de Azufre</h2>
+        <p>Limpieza especifica para piel grasa, brillo persistente y sensacion de poros congestionados.</p>
+        <div class="price-row"><span class="pill">90 g</span><span class="pill price">Bs ___</span></div>
+        <div class="cards">
+          <div class="card"><strong>Beneficio</strong><span>El azufre se usa en cosmetica por su apoyo en higiene de piel grasa.</span></div>
+          <div class="card"><strong>Uso</strong><span>Aplicar solo en zonas necesarias, dejar actuar brevemente y enjuagar bien.</span></div>
+          <div class="card"><strong>Aplicacion</strong><span>Iniciar 3 veces por semana. Aumentar solo si la piel lo tolera bien.</span></div>
+          <div class="card"><strong>Recomendacion</strong><span>No combinar el mismo dia con exfoliacion intensa para evitar resequedad.</span></div>
+        </div>
+        <div class="note">Uso seguro siguiendo recomendaciones de aplicacion.</div>
+      </div>
+      <div class="visual terracotta"><img class="product-img" src="1779059889457.jpg" alt="Jabon de Azufre" /></div>
+    </section>
+
+    <section class="slide bleed">
+      <img class="watermark" src="1_20260517_195608_0000.png" alt="" />
+      <div class="photo"><img class="product-img" src="1779058319163.jpg" alt="Crema Facial" /></div>
+      <div class="content">
+        <div class="eyebrow">Hidratacion nutritiva</div>
+        <h2>Crema Facial</h2>
+        <p>Sabila, colageno, pepino y vitaminas A, E y C para una piel con sensacion nutrida y flexible.</p>
+        <div class="price-row"><span class="pill">Presentacion en gramos</span><span class="pill price">Bs ___</span></div>
+        <div class="cards">
+          <div class="card"><strong>Beneficio</strong><span>Apoya la hidratacion superficial y mejora la sensacion de elasticidad.</span></div>
+          <div class="card"><strong>Uso</strong><span>Aplicar una pequena cantidad sobre rostro limpio, manana y noche.</span></div>
+          <div class="card"><strong>Aplicacion</strong><span>Distribuir hacia arriba en mejillas, frente, cuello y escote.</span></div>
+          <div class="card"><strong>Tip</strong><span>Usar despues del Jabon de Arroz para una rutina de luminosidad.</span></div>
+        </div>
+        <div class="note">Textura para cuidado diario, con enfoque artesanal natural.</div>
+      </div>
+    </section>
+
+    <section class="slide product">
+      <img class="watermark" src="1_20260517_195608_0000.png" alt="" />
+      <div class="visual"><img class="product-img" src="1779058568481.jpg" alt="Crema Anti-Stress" /></div>
+      <div class="content">
+        <div class="eyebrow">Cuidado corporal</div>
+        <h2>Crema Anti-Stress</h2>
+        <p>Formula relajante con magnesio y aceites esenciales para masaje localizado.</p>
+        <div class="price-row"><span class="pill">150 g</span><span class="pill price">Bs ___</span></div>
+        <div class="cards">
+          <div class="card"><strong>Beneficio</strong><span>El masaje favorece la sensacion de descanso muscular y bienestar corporal.</span></div>
+          <div class="card"><strong>Uso</strong><span>Aplicar en cuello, hombros, espalda o piernas con movimientos lentos.</span></div>
+          <div class="card"><strong>Aplicacion</strong><span>Usar por la noche o despues de una jornada de esfuerzo fisico.</span></div>
+          <div class="card"><strong>Recomendacion</strong><span>Realizar masaje de 3 a 5 minutos hasta lograr absorcion confortable.</span></div>
+        </div>
+        <div class="note">Uso externo. Uso seguro siguiendo recomendaciones de aplicacion.</div>
+      </div>
+    </section>
+
+    <section class="slide product reverse">
+      <img class="watermark" src="1_20260517_195608_0000.png" alt="" />
+      <div class="content">
+        <div class="eyebrow">Alivio corporal rapido</div>
+        <h2>Crema Vital-Flex</h2>
+        <p>Crema para masaje en zonas de tension articular o muscular con sensacion de calor intenso.</p>
+        <div class="price-row"><span class="pill">150 g</span><span class="pill price">Bs ___</span></div>
+        <div class="cards">
+          <div class="card"><strong>Beneficio</strong><span>El masaje localizado ayuda a activar la sensacion termica y confort en la zona.</span></div>
+          <div class="card"><strong>Uso</strong><span>Aplicar poca cantidad sobre la zona y masajear hasta absorcion.</span></div>
+          <div class="card"><strong>Aplicacion</strong><span>Evitar contacto con ojos, mucosas o piel recien rasurada.</span></div>
+          <div class="card"><strong>Recomendacion</strong><span>Lavar manos despues de aplicar y no cubrir con calor adicional.</span></div>
+        </div>
+        <div class="note">Uso seguro siguiendo recomendaciones de aplicacion.</div>
+      </div>
+      <div class="visual terracotta"><img class="product-img" src="1779058638197.jpg" alt="Crema Vital-Flex" /></div>
+    </section>
+
+    <section class="slide product">
+      <img class="watermark" src="1_20260517_195608_0000.png" alt="" />
+      <div class="visual green"><img class="product-img" src="1779058854107.jpg" alt="Shampoo Anti-Stress" /></div>
+      <div class="content">
+        <div class="eyebrow">Cuidado capilar</div>
+        <h2>Shampoo Anti-Stress</h2>
+        <p>Refrescante y relajante, con aceites esenciales y extractos botanicos para cuero cabelludo y cabello.</p>
+        <div class="price-row"><span class="pill">160 g</span><span class="pill price">Bs ___</span></div>
+        <div class="cards">
+          <div class="card"><strong>Beneficio</strong><span>Apoya la limpieza capilar con sensacion fresca, suave y aromatica.</span></div>
+          <div class="card"><strong>Uso</strong><span>Aplicar sobre cabello mojado, masajear cuero cabelludo y enjuagar.</span></div>
+          <div class="card"><strong>Aplicacion</strong><span>Repetir si se requiere mayor limpieza. Usar 2 a 4 veces por semana.</span></div>
+          <div class="card"><strong>Recomendacion</strong><span>Combo especial con Jabon de Arroz y Crema Facial.</span></div>
+        </div>
+        <div class="note">Producto unisex para una rutina de frescura y cuidado natural.</div>
+      </div>
+    </section>
+
+    <section class="slide product reverse">
+      <img class="watermark" src="1_20260517_195608_0000.png" alt="" />
+      <div class="content">
+        <div class="eyebrow">Probiotico artesanal</div>
+        <h2>Kefir de Leche</h2>
+        <p>Bebida probiotica artesanal de consumo diario, elaborada para acompanar habitos de bienestar.</p>
+        <div class="price-row"><span class="pill">1 litro</span><span class="pill">Medio litro</span><span class="pill price">Bs ___</span></div>
+        <div class="cards">
+          <div class="card"><strong>Beneficio</strong><span>Contiene microorganismos asociados al equilibrio de la microbiota intestinal.</span></div>
+          <div class="card"><strong>Uso</strong><span>Consumir frio. Agitar suavemente antes de servir.</span></div>
+          <div class="card"><strong>Aplicacion</strong><span>Iniciar con porciones pequenas y aumentar segun preferencia personal.</span></div>
+          <div class="card"><strong>Etiqueta</strong><span>Sin azucar, sin conservantes, sin lactosa y probiotico artesanal.</span></div>
+        </div>
+        <div class="note">Mantener refrigerado. Producto de consumo diario.</div>
+      </div>
+      <div class="visual"><img class="product-img" src="image.jpg" alt="Kefir de Leche" /></div>
+    </section>
+
+    <section class="slide contact">
+      <img class="watermark" src="1_20260517_195608_0000.png" alt="" />
+      <div class="contact-left">
+        <div>
+          <div class="eyebrow">Haz tu pedido</div>
+          <h2>ArteSana</h2>
+          <p>Productos artesanales para una rutina natural, practica y sensorial.</p>
+        </div>
+        <img src="1_20260517_195608_0000.png" alt="Logo ArteSana" />
+        <div>
+          <p><strong>Contactanos al +591 68703773</strong></p>
+          <p class="small">Facebook: ArteSana</p>
+          <p class="small">Delivery gratis hasta 4to anillo - Santa Cruz.</p>
+        </div>
+      </div>
+      <div class="contact-right">
+        <div class="qr-card">
+          <img src="3_20260517_195608_0002.png" alt="QR WhatsApp" />
+          <h3>WhatsApp</h3>
+          <p class="small">Escanea y realiza tu pedido.</p>
+        </div>
+        <div class="qr-card">
+          <img src="2_20260517_195608_0001.png" alt="QR Pago digital" />
+          <h3>Pago digital</h3>
+          <p class="small">Forma de pago digital.</p>
+        </div>
+        <div class="wide-card">
+          <div>
+            <strong>Combos especiales</strong>
+            <p class="small">Jabon de Arroz + Crema Facial + Shampoo Anti-Stress. Pregunta por disponibilidad y precio final.</p>
+          </div>
+          <span class="pill">Bs ___</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
