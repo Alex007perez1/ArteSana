@@ -32,7 +32,11 @@ export const metadata: Metadata = {
     ],
   },
   icons: {
-    icon: "/catalog/logo-small.png",
+    icon: [
+      { url: "/catalog/logo-small.png", type: "image/png" },
+    ],
+    shortcut: "/catalog/logo-small.png",
+    apple: "/catalog/logo-small.png",
   },
 };
 
