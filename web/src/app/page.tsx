@@ -66,6 +66,8 @@ export default function Home() {
   const [qrPagoUrl, setQrPagoUrl] = useState('/catalog/qr-pago.png');
   const [pageContent, setPageContent] = useState<Record<string, string>>({...DEFAULT_CONTENT});
 
+  const [mounted, setMounted] = useState(false);
+
   const [cart, setCart] = useState<CartItem[]>(() => {
     if (typeof window === 'undefined') return [];
     const savedCart = localStorage.getItem('artesana-cart');
@@ -80,6 +82,8 @@ export default function Home() {
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -246,7 +250,7 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <button onClick={() => setIsCartOpen(true)} className="relative p-2.5 bg-[#732135] text-white hover:bg-[#b76545] rounded-full shadow-lg transition-all cursor-pointer hover:scale-105 active:scale-95">
               <ShoppingCart className="w-5 h-5" />
-              {totalItems > 0 && (
+              {mounted && totalItems > 0 && (
                 <span className="absolute -top-1 -right-1 bg-[#2d5a27] text-white font-bold text-2xs w-5 h-5 flex items-center justify-center rounded-full">
                   {totalItems}
                 </span>
@@ -504,9 +508,9 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 mt-12 pt-6 border-t border-gray-200/50 text-center text-3xs text-gray-400">© 2026 ArteSana. Santa Cruz, Bolivia.</div>
       </footer>
 
-      {totalItems > 0 && !isCartOpen && (
+      {mounted && totalItems > 0 && !isCartOpen && (
         <button onClick={() => setIsCartOpen(true)}
-          className="fixed left-4 right-4 bottom-4 z-40 mx-auto max-w-md bg-[#732135] text-white rounded-2xl shadow-2xl border border-white/20 px-4 py-3.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-[#b76545] transition-all md:hidden">
+          className="fixed left-4 right-4 bottom-4 z-50 mx-auto max-w-md bg-[#732135] text-white rounded-2xl shadow-2xl border border-white/20 px-4 py-3.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-[#b76545] transition-all">
           <span className="flex items-center gap-2 font-bold text-sm">
             <ShoppingCart className="w-5 h-5" /> Ver carrito ({totalItems})
           </span>
