@@ -8,6 +8,7 @@ import {
   Sparkles, MapPin, Award, CheckCircle, Clock
 } from 'lucide-react';
 import Link from 'next/link';
+import AdBanner from '@/components/AdBanner';
 
 interface Product {
   id: string;
@@ -283,6 +284,13 @@ export default function Home() {
           <div className="md:col-span-5 flex justify-center">
             <img src={logoUrl} alt="ArteSana" className="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 object-contain filter drop-shadow-2xl" />
           </div>
+        </div>
+      </section>
+
+      {/* ANUNCIO */}
+      <section className="max-w-6xl mx-auto w-full px-4 pt-8">
+        <div className="bg-white/60 border border-[#732135]/10 rounded-2xl px-3 py-2">
+          <AdBanner />
         </div>
       </section>
 
