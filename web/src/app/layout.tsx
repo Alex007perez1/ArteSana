@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -39,6 +38,9 @@ export const metadata: Metadata = {
     shortcut: "/catalog/logo-small.png",
     apple: "/catalog/logo-small.png",
   },
+  other: {
+    "google-adsense-account": "ca-pub-5680584704825825",
+  },
 };
 
 export default function RootLayout({
@@ -53,11 +55,10 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         {children}
-        <Script
+        <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5680584704825825"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
         />
       </body>
     </html>
